@@ -1,48 +1,68 @@
-import socket
-import threading
 
-# Define the server
+import asyncio
+
 class GameServer:
-    def __init__(self, host='localhost', port=12345):
+    def __init__(self, host='127.0.0.1', port=8888):
         self.host = host
         self.port = port
-        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_connections = []
+        self.clients = []
 
-    def start(self):
-        # Bind and listen for client connections
-        self.server_socket.bind((self.host, self.port))
-        self.server_socket.listen(5)
-        print(f"Server started on {self.host}:{self.port}")
+    async def handle_client(self, reader, writer):
+        address = writer.get_extra_info('peername')
+        print(f"Client connected: {address}")
+        self.clients.append((reader, writer))
 
-        while True:
-            client_socket, client_address = self.server_socket.accept()
-            print(f"Client connected: {client_address}")
-            self.client_connections.append(client_socket)
+        if len(self.clients) == 2:
+            await self.start_game()
 
-            # Start a new thread to handle the client's communication
-            threading.Thread(target=self.handle_client, args=(client_socket,)).start()
-
-    def handle_client(self, client_socket):
         try:
             while True:
-                # Receive data from the client
-                data = client_socket.recv(1024).decode('utf-8')
+                data = await reader.readline()
                 if not data:
                     break
-
-                print(f"Received from client: {data}")
-
-                # Process the data (in this case, just echoing it back)
-                response = f"Server: {data}"
-                client_socket.send(response.encode('utf-8'))
-        except ConnectionResetError:
-            print("Client disconnected unexpectedly")
+                print(f"Received {data.decode().strip()} from {address}")
+        except asyncio.CancelledError:
+            pass
         finally:
-            client_socket.close()
-            self.client_connections.remove(client_socket)
+            print(f"Client disconnected: {address}")
+            self.clients.remove((reader, writer))
+            writer.close()
+            await writer.wait_closed()
 
-# Start the server
+    async def start_game(self):
+        for _, writer in self.clients:
+            writer.write(b"Welcome to the Game!\n")
+            await writer.drain()
+
+        for round in range(3):  # Example: 3 rounds of play
+            for reader, writer in self.clients:
+                writer.write(b"Your turn! Enter a message: ")
+                await writer.drain()
+                data = await reader.readline()
+                message = data.decode().strip()
+                print(f"Player said: {message}")
+                writer.write(f"You said: {message}\n".encode())
+                await writer.drain()
+
+        for _, writer in self.clients:
+            writer.write(b"Game over. Thanks for playing!\n")
+            await writer.drain()
+            writer.close()
+            await writer.wait_closed()
+        self.clients.clear()
+
+    async def run_server(self):
+        server = await asyncio.start_server(self.handle_client, self.host, self.port)
+        print(f"Server started on {self.host}:{self.port}")
+        async with server:
+            await server.serve_forever()
+
 if __name__ == "__main__":
-    server = GameServer()
-    server.start()
+    game_server = GameServer()
+    try:
+        asyncio.run(game_server.run_server())
+    except KeyboardInterrupt:
+        print("Server stopped.")
+
+
+

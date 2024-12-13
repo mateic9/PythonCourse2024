@@ -1,40 +1,28 @@
-import socket
+import asyncio
+async def game_client(host='127.0.0.1', port=8888):
+    reader, writer = await asyncio.open_connection(host, port)
 
-# Define the client
-class GameClient:
-    def __init__(self, host='localhost', port=12345):
-        self.host = host
-        self.port = port
-        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print("Connected to the server. Type your messages below.")
+    try:
+        while True:
+            server_message = await reader.readline()
+            if not server_message:
+                break
+            print(f"Server: {server_message.decode().strip()}")
 
-    def connect(self):
-        # Connect to the server
-        self.client_socket.connect((self.host, self.port))
-        print(f"Connected to server at {self.host}:{self.port}")
+            if "Your turn!" in server_message.decode():
+                user_input = input("You: ")
+                writer.write(f"{user_input}\n".encode())
+                await writer.drain()
+    except asyncio.CancelledError:
+        pass
+    finally:
+        print("Disconnected from the server.")
+        writer.close()
+        await writer.wait_closed()
 
-    def send_message(self, message):
-        # Send a message to the server
-        self.client_socket.send(message.encode('utf-8'))
-        print(f"Sent to server: {message}")
-
-        # Receive a response from the server
-        response = self.client_socket.recv(1024).decode('utf-8')
-        print(f"Received from server: {response}")
-
-    def close(self):
-        # Close the connection
-        self.client_socket.close()
-
-# Start the client
 if __name__ == "__main__":
-    client = GameClient()
-    client.connect()
-
-    while True:
-        # Get user input to simulate a game action
-        message = input("Enter a message to send to the server (or 'exit' to quit): ")
-        if message.lower() == 'exit':
-            break
-        client.send_message(message)
-
-    client.close()
+    try:
+        asyncio.run(game_client())
+    except KeyboardInterrupt:
+        print("Client stopped.")
