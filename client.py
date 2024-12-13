@@ -1,39 +1,40 @@
 import socket
 
-# Client to connect to the server
+# Define the client
 class GameClient:
-    def __init__(self, host="127.0.0.1", port=12345):
+    def __init__(self, host='localhost', port=12345):
         self.host = host
         self.port = port
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    def start_client(self):
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((self.host, self.port))
-        print("Connected to server!")
+    def connect(self):
+        # Connect to the server
+        self.client_socket.connect((self.host, self.port))
+        print(f"Connected to server at {self.host}:{self.port}")
 
-        while True:
-            response = client_socket.recv(1024).decode()
-            if response:
-                print(response)
-                if "Game Started!" in response:
-                    self.play_game(client_socket)
-                else:
-                    print("Waiting for opponent...")
+    def send_message(self, message):
+        # Send a message to the server
+        self.client_socket.send(message.encode('utf-8'))
+        print(f"Sent to server: {message}")
 
-    def play_game(self, client_socket):
-        while True:
-            # Wait for the player's turn
-            move = input("Enter your move (e.g., 'rock', 'paper', 'scissors') or 'end' to end turn: ")
+        # Receive a response from the server
+        response = self.client_socket.recv(1024).decode('utf-8')
+        print(f"Received from server: {response}")
 
-            # Check if move is 'end' to indicate no more moves for this turn
-            if move.lower() == 'end':
-                client_socket.send("end".encode())
-                break  # End this player's turn
+    def close(self):
+        # Close the connection
+        self.client_socket.close()
 
-            client_socket.send(move.encode())  # Send the move to the server
-            opponent_move = client_socket.recv(1024).decode()
-            print(f"Opponent's move: {opponent_move}")
-
+# Start the client
 if __name__ == "__main__":
     client = GameClient()
-    client.start_client()
+    client.connect()
+
+    while True:
+        # Get user input to simulate a game action
+        message = input("Enter a message to send to the server (or 'exit' to quit): ")
+        if message.lower() == 'exit':
+            break
+        client.send_message(message)
+
+    client.close()
