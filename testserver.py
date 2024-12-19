@@ -1,10 +1,14 @@
-# SuperFastPython.com
-# example of creating a server
-import asyncio
 
+import asyncio
+nr_clients=0
+lock=asyncio.Lock()
 # handler for client connections
 async def handler(reader, writer):
     addr = writer.get_extra_info('peername')
+    global nr_clients
+    async with lock:
+        nr_clients += 1
+        print(f"Client connected: {addr}. Total clients: {nr_clients}")
     print(type(writer))
     for i in range(0,3):
         writer.write("Lalala\n".encode())
