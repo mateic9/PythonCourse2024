@@ -1,5 +1,12 @@
 import socket
-import threading
+import threading, time
+winner_id=-1
+def apply_move(move,game_finished,client_id):
+
+    if "3" in move:
+        game_finished.set()
+        global winner_id
+        winner_id=client_id
 def is_valid_move(data):
     if "1" in data :
         return True
@@ -11,18 +18,27 @@ def get_move_from_player(client_socket):
     while not is_valid_move(move):
         client_socket.sendall(f"{move} is an invalid_move:".encode('utf-8'))
         move=client_socket.recv(1024).decode('utf-8')
-def handle_client(client_socket, client_address, client_id,players_barrier,e1,e2):
+    return move
+def handle_client(client_socket, client_address, client_id,players_barrier,e1,e2,game_finished):
     print(f"Client {client_id} connected from {client_address}")
     try:
         connect_msg=f"You connected to the server with this {client_id}"
         client_socket.sendall(connect_msg.encode('utf-8'))
         b_id=players_barrier.wait()
         print("Am trecut de bariera")
-        while True:
+        print(game_finished.is_set())
+
+        while not game_finished.is_set():
           e1.wait()
           e1.clear()
-          get_move_from_player(client_socket)
+          if game_finished.is_set():
+              break
+          current_move=get_move_from_player(client_socket)
+          apply_move(current_move,game_finished,client_id)
           e2.set()
+        global winner_id
+        print(f"Value of winner_id:{winner_id}")
+        client_socket.sendall(f"End of Game!Player with id:{client_id} won".encode('utf-8'))
 
 
 
@@ -42,14 +58,16 @@ def start_server(host='127.0.0.1', port=65432):
     threads = []
     e1 = threading.Event()
     e2 = threading.Event()
+    game_finished=threading.Event()
+    print(game_finished.is_set())
     wait_2players_barrier=threading.Barrier(2)
     e1.set()
     while client_id <= 2:
         client_socket, client_address = server_socket.accept()
         if(client_id==1):
-            thread = threading.Thread(target=handle_client, args=(client_socket, client_address, client_id,wait_2players_barrier,e1,e2))
+            thread = threading.Thread(target=handle_client, args=(client_socket, client_address, client_id,wait_2players_barrier,e1,e2,game_finished))
         else:
-            thread = threading.Thread(target=handle_client, args=(client_socket, client_address, client_id,wait_2players_barrier,e2,e1))
+            thread = threading.Thread(target=handle_client, args=(client_socket, client_address, client_id,wait_2players_barrier,e2,e1,game_finished))
         threads.append(thread)
         thread.start()
         client_id += 1
