@@ -9,6 +9,9 @@ end_of_game_msg="End of Game!"
 opponent_turn_message="Opponent move:"
 confirmation_message="Received move:"
 disconnect_message="You were disconnected"
+valid_move_msg="Valid move:"
+def apply_move(move):
+    print(f"{move} is applied")
 def make_a_move(client_socket):
     message = input("Enter your message (or 'quit' to exit): ")
     client_socket.sendall(message.encode('utf-8'))
@@ -34,6 +37,9 @@ def start_client(host='127.0.0.1', port=65432):
             print(f"Respone:{response}\n")
             if response=="Your turn now:" or invalid_move_msg in str(response):
                 make_a_move(client_socket)
+            if response.startswith(valid_move_msg):
+                move=response.split(':')[1]
+                apply_move(move)
             if response.startswith(opponent_turn_message):
                 opp_move=response.split(':')[1]
                 msg=confirmation_message+opp_move
