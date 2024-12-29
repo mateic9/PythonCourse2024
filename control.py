@@ -1,10 +1,12 @@
 class LogicGame:
-    def __init__(self, width=7, height=6):
+    def __init__(self,mode, width=7, height=6,difficulty=None):
         """
         Initialize the game board with given width and height.
         """
+        self.mode=mode
         self.width = width
         self.height = height
+        self.difficulty = difficulty if mode == "singleplayer" else None
         self.board = [[0 for _ in range(width)] for _ in range(height)]  # 0 indicates empty cells
         self.current_player = 1  # Player 1 starts the game
 
