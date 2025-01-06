@@ -10,10 +10,26 @@ valid_move_msg="Valid move on column:"
 nr_moves=0
 last_opp_move=-1
 def prepend_length(message):
+    """
+    Prepend the length of the message to the message content
+
+    Parameters:
+        message (str): The original message
+
+    Returns:
+        str: A formatted message with its length prepended
+    """
     length = len(message)
     return f"{length}:{message}"
 
 def send_move_client(client_socket,move):
+    """
+    Send the opponent's move to the client.
+
+    Parameters:
+        client_socket (socket): The client's socket.
+        move (int): The column number of the move.
+    """
     msg=opponent_turn_message+str(move)
     client_socket.sendall(prepend_length(msg).encode('utf-8'))
 def  wait_confirmation(client_socket):
@@ -66,7 +82,18 @@ def handle_client_1p(client_socket, client_address,game,first):
 
 
 def handle_client_2p(client_socket, client_address, client_id,players_barrier,e1,e2,game):
+    """
+    Handle multiplayer game interactions with the client
 
+    Parameters:
+        client_socket (socket): The client's socket
+        client_address (tuple): The client's address
+        client_id (int): The client's ID
+        players_barrier (Barrier): Barrier for player synchronization
+        e1 (Event): Event to signal player's turn
+        e2 (Event): Event to signal opponent's turn
+        game (LogicGame): The game instance
+    """
     try:
         connect_msg=f"You connected to the server with this {client_id}"
         client_socket.sendall(prepend_length(connect_msg).encode('utf-8'))
@@ -109,6 +136,13 @@ def handle_client_2p(client_socket, client_address, client_id,players_barrier,e1
         client_socket.close()
 
 def start_server(host='127.0.0.1', port=65432):
+    """
+    Start the game server and handle incoming client connections.
+
+    Parameters:
+        host (str): The server's hostname or IP address.
+        port (int): The port number to listen on.
+    """
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((host, port))
     server_socket.listen(2)

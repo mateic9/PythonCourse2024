@@ -11,12 +11,31 @@ confirmation_message="Received move:"
 disconnect_message="You were disconnected"
 valid_move_msg="Valid move"
 def validate_args(args):
-    """Validate arguments after parsing."""
+    """
+    Validate the command-line arguments after parsing
+
+    Parameters:
+        args (Namespace): Parsed command-line arguments
+
+    Raises:
+        SystemExit: If required arguments for singleplayer mode are missing
+    """
     if args.mode == "singleplayer" and not args.difficulty and not args.first:
         print("Error: --difficulty and --first  is required when mode is 'singleplayer", file=sys.stderr)
         sys.exit(1)
 def receive_message(client_socket):
+    """
+    Receive a message from the server with length-prefix encoding.
 
+    Parameters:
+        client_socket (socket): The client's socket connection.
+
+    Returns:
+        str: The decoded message received from the server.
+
+    Raises:
+        ValueError: If the message length is invalid or data is incomplete.
+    """
     length_data = b''
     while True:
         byte = client_socket.recv(1)
@@ -39,6 +58,13 @@ def receive_message(client_socket):
 
     return message_data.decode('utf-8')
 def make_a_move(client_socket, visuals):
+    """
+    Allow the player to make a move and send it to the server.
+
+    Parameters:
+        client_socket (socket): The client's socket connection.
+        visuals (Connect4Visuals): Visual representation of the game board.
+    """
     visuals.toggle_buttons("normal")
     # message = input("Enter your move (column number): ")
     message=visuals.wait_for_move()
@@ -48,6 +74,13 @@ def make_a_move(client_socket, visuals):
 
 
 def start_client(host='127.0.0.1', port=65432):
+    """
+    Start the client for a Connect 4 game and communicate with the server.
+
+    Parameters:
+        host (str): The server's IP address or hostname.
+        port (int): The server's port number.
+    """
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.settimeout(10)
     try:

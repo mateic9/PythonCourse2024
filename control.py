@@ -25,11 +25,34 @@ class LogicGame:
         print(" " + "-" * (2 * self.width - 1))
 
     def is_valid_move(self, column):
+
+        """
+        Check if a move is valid for the given column
+
+        Parameters:
+            column (int): The column index where the player wants to place their piece
+
+        Returns:
+            bool: True if the move is valid (column is within bounds and not full), otherwise False
+        """
         if column < 0 or column >= self.width:
             return False
         return self.board[0][column] == 0
 
     def make_move(self, column):
+        """
+
+        Place the current player's piece in the specified column if the chosen move is a valid one
+
+        The piece is placed in the lowest available row in the column
+        The turn alternates between players after a successful move
+
+        Parameters:
+            column (int): The column index where the piece is to be placed
+
+        Returns:
+            bool: True if the move was successful, otherwise False if the move is invalid
+        """
         if not self.is_valid_move(column):
             return False
 
@@ -41,6 +64,15 @@ class LogicGame:
         return False
 
     def check_winner(self):
+        """
+        Check if there is a winner on the board.
+
+        Evaluates horizontal, vertical, and diagonal lines for a sequence of 4
+        matching pieces for either player.
+
+        Returns:
+            int: The player number (1 or 2) if there is a winner, or 0 if no winner exists.
+        """
         for row in range(self.height):
             for col in range(self.width):
                 if self.board[row][col] == 0:
@@ -77,7 +109,16 @@ class LogicGame:
             return True, 0
         return False, None
     def AI_decides_move(self):
-        print("initial board:")
+        """
+        Determine the optimal move for the AI player using the minimax algorithm
+
+        Copies the current board state after evaluating all potential moves up to the
+        configured depth and selecting the move with the best score.
+
+        Returns:
+            int: The column index of the best move for the AI.
+        """
+
 
 
         boardcopy = self.copy_board()
@@ -114,6 +155,19 @@ class LogicGame:
         board[row][column] =0
 
     def minimax(self, total_moves, board):
+        """
+        Perform the minimax algorithm to evaluate the optimal move for a player
+
+        Recursively simulates all possible moves up to a given depth, scoring each
+        move based on its effect on the board state
+
+        Parameters:
+            total_moves (int): The remaining depth for the minimax evaluation.
+            board (list): The current simulated state of the game board.
+
+        Returns:
+            tuple: A score representing the board state and the column index of the best move.
+        """
         width = len(board[0])
         map_score_move = {}
         key_to_return = None

@@ -3,6 +3,17 @@ import os
 import platform
 
 def launch_in_terminal(command, args):
+    """
+    Launch a command in a new terminal window
+
+    Supports Windows macOS and Linux
+    Parameters:
+        command (str): The command to be executed in the terminal
+        args (list): A list of arguments to pass to the command
+
+    Raises:
+        Exception: If there is an error launching the terminal or command
+    """
     try:
         if platform.system() == "Windows":
 
@@ -18,7 +29,7 @@ def launch_in_terminal(command, args):
         print(f"Error launching client: {e}")
 
 command = r".\thread_client.py"
-args = ["--mode=singleplayer", "--height=6", "--width=6" ,"--difficulty=medium" ,"--first=yes"]
+args = ["--mode=multiplayer", "--height=6", "--width=6" ,"--difficulty=medium" ,"--first=yes"]
 
 
 if "--mode=singleplayer" in args:
